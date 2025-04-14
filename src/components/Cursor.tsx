@@ -1,86 +1,133 @@
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { motion, useSpring, useTransform } from 'framer-motion';
 
 export const Cursor = () => {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isPointer, setIsPointer] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   const [isClicking, setIsClicking] = useState(false);
-  const [trail, setTrail] = useState<{ x: number; y: number }[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
 
-  // Spring animation for smoother cursor movement
-  const springConfig = { damping: 20, stiffness: 300 };
-  const springX = useSpring(position.x, springConfig);
-  const springY = useSpring(position.y, springConfig);
+  // Smooth spring animation for cursor movement
+  const cursorX = useSpring(0, { stiffness: 500, damping: 30 });
+  const cursorY = useSpring(0, { stiffness: 500, damping: 30 });
 
-  // Transform for cursor scale based on interaction
+  // Size transformations
   const scale = useTransform(
-    springX,
-    [0, window.innerWidth],
-    [1, isPointer ? 1.5 : 1]
+    useSpring(isHovering ? 1.5 : 1, { stiffness: 500, damping: 30 }),
+    [1, 1.5],
+    [1, 1.5]
+  );
+
+  // Opacity transformations
+  const opacity = useTransform(
+    useSpring(isHovering ? 0.8 : 1, { stiffness: 500, damping: 30 }),
+    [1, 0.8],
+    [1, 0.8]
+  );
+
+  // Rotation for drag effect
+  const rotate = useTransform(
+    useSpring(isDragging ? 45 : 0, { stiffness: 500, damping: 30 }),
+    [0, 45],
+    [0, 45]
   );
 
   useEffect(() => {
-    const updatePosition = (e: MouseEvent) => {
-      const newPosition = { x: e.clientX, y: e.clientY };
-      setPosition(newPosition);
-      
-      // Create a more dynamic trail effect
-      setTrail(prev => {
-        const newTrail = [...prev, newPosition];
-        return newTrail.slice(-8); // Keep last 8 positions
-      });
-      
-      const target = e.target as HTMLElement;
-      setIsPointer(
-        window.getComputedStyle(target).cursor === 'pointer' ||
-        target.tagName === 'BUTTON' ||
-        target.tagName === 'A' ||
-        target.getAttribute('role') === 'button'
-      );
+    const moveCursor = (e: MouseEvent) => {
+      setPosition({ x: e.clientX, y: e.clientY });
+      cursorX.set(e.clientX);
+      cursorY.set(e.clientY);
     };
 
     const handleMouseDown = () => setIsClicking(true);
     const handleMouseUp = () => setIsClicking(false);
+    const handleDragStart = () => setIsDragging(true);
+    const handleDragEnd = () => setIsDragging(false);
 
-    window.addEventListener('mousemove', updatePosition);
+    // Add event listeners for interactive elements
+    const interactiveElements = document.querySelectorAll('a, button, input, textarea, [role="button"]');
+    interactiveElements.forEach(element => {
+      element.addEventListener('mouseenter', () => setIsHovering(true));
+      element.addEventListener('mouseleave', () => setIsHovering(false));
+      element.addEventListener('mousedown', handleDragStart);
+      element.addEventListener('mouseup', handleDragEnd);
+    });
+
+    window.addEventListener('mousemove', moveCursor);
     window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
-      window.removeEventListener('mousemove', updatePosition);
+      window.removeEventListener('mousemove', moveCursor);
       window.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mouseup', handleMouseUp);
+      interactiveElements.forEach(element => {
+        element.removeEventListener('mouseenter', () => setIsHovering(true));
+        element.removeEventListener('mouseleave', () => setIsHovering(false));
+        element.removeEventListener('mousedown', handleDragStart);
+        element.removeEventListener('mouseup', handleDragEnd);
+      });
     };
   }, []);
 
   return (
-    <>
-      {trail.map((pos, index) => (
-        <motion.div
-          key={index}
-          className="fixed top-0 left-0 w-3 h-3 pointer-events-none z-50 mix-blend-difference"
-          initial={{ opacity: 0.1 }}
-          animate={{
-            x: pos.x - 6,
-            y: pos.y - 6,
-            opacity: index === trail.length - 1 ? 0.5 : 0.1,
-          }}
-          transition={{ duration: 0.1 }}
-        >
-          <div className="w-full h-full bg-white rounded-full blur-sm" />
-        </motion.div>
-      ))}
+    <motion.div
+      className="fixed top-0 left-0 w-4 h-4 pointer-events-none z-50 mix-blend-difference"
+      style={{
+        x: cursorX,
+        y: cursorY,
+        scale,
+        opacity,
+        rotate,
+        backgroundColor: isHovering ? '#4F46E5' : '#FFFFFF',
+        borderRadius: isHovering ? '50%' : '0%',
+        transition: 'border-radius 0.3s ease',
+      }}
+      animate={{
+        scale: isClicking ? 0.8 : 1,
+        backgroundColor: isHovering ? '#4F46E5' : '#FFFFFF',
+      }}
+      transition={{
+        type: 'spring',
+        stiffness: 500,
+        damping: 30,
+      }}
+    >
+      {/* Inner cursor dot */}
       <motion.div
-        className="fixed top-0 left-0 w-3 h-3 pointer-events-none z-50 mix-blend-difference"
+        className="absolute inset-0"
         style={{
-          x: springX,
-          y: springY,
-          scale: isClicking ? 0.8 : scale,
+          backgroundColor: isHovering ? '#FFFFFF' : '#4F46E5',
+          scale: isHovering ? 0.4 : 0.2,
+          borderRadius: '50%',
         }}
-        transition={{ type: "spring", stiffness: 500, damping: 28 }}
-      >
-        <div className="w-full h-full bg-white rounded-full" />
-      </motion.div>
-    </>
+        animate={{
+          scale: isClicking ? 0.6 : isHovering ? 0.4 : 0.2,
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 500,
+          damping: 30,
+        }}
+      />
+      
+      {/* Cursor ring */}
+      <motion.div
+        className="absolute inset-0 border-2"
+        style={{
+          borderColor: isHovering ? '#4F46E5' : '#FFFFFF',
+          scale: isHovering ? 1.2 : 1,
+          borderRadius: '50%',
+        }}
+        animate={{
+          scale: isClicking ? 0.9 : isHovering ? 1.2 : 1,
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 500,
+          damping: 30,
+        }}
+      />
+    </motion.div>
   );
 };
