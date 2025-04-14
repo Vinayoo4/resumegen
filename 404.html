@@ -6,8 +6,10 @@
     <script type="text/javascript">
       // Get the path from the URL
       var path = window.location.pathname;
+      // Remove the base path if it exists
+      path = path.replace('/resumegen', '');
       // Redirect to index.html with the path as a query parameter
-      window.location.href = '/index.html?p=' + path;
+      window.location.href = '/resumegen/index.html?p=' + path;
     </script>
   </head>
   <body>
