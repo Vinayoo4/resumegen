@@ -1,0 +1,28 @@
+[
+  {
+    "id": "story_seed_1",
+    "noteId": "note_1",
+    "title": "Seed Project MVP",
+    "description": "The story of how this app was seeded.",
+    "tags": [
+      "vue",
+      "node"
+    ],
+    "beats": [
+      {
+        "id": "beat_1",
+        "noteId": "note_1",
+        "text": "Started the project setup by initializing Vue and Express.",
+        "order": 0
+      },
+      {
+        "id": "beat_2",
+        "noteId": "note_1",
+        "text": "Configured the simple JSON file storage adapter for local testing.",
+        "order": 1
+      }
+    ],
+    "createdAt": 1779982279760,
+    "updatedAt": 1779982279760
+  }
+]

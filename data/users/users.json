@@ -1,0 +1,9 @@
+[
+  {
+    "id": "user_admin",
+    "username": "admin",
+    "passwordHash": "039478bb27d774d2926340e82360ed892fdc033f858edb9500760bc0dc38cf2bcdfc0aabcc71de71208658db3022135c1582f792a643cb7e83c829bfa54ee04f",
+    "salt": "cdf62c93d323f78b4ea20d48d9f8359e",
+    "createdAt": 1779982279756
+  }
+]
